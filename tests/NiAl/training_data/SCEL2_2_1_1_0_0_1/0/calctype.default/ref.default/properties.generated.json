@@ -1,0 +1,9 @@
+{
+  "configid" : "0",
+  "generated" : {
+    "dist_from_hull" : 0.000000000000,
+    "is_groundstate" : true
+  },
+  "param_composition" : [ 0.500000000000 ],
+  "supercell_name" : "SCEL2_1_2_1_0_0_1"
+}

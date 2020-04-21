@@ -1,0 +1,21 @@
+{
+    "atom_type": [
+        "Ni"
+    ], 
+    "atoms_per_type": [
+        1
+    ], 
+    "coord_mode": "direct", 
+    "relaxed_basis": [
+        [0.0, 0.0, 0.0]
+    ], 
+    "relaxed_energy": -5.77487892, 
+    "relaxed_forces": [
+        [0.0, 0.0, 0.0]
+    ], 
+    "relaxed_lattice": [
+        [0.0, 1.75394457, 1.75394457], 
+        [1.75394457, 0.0, 1.75394457], 
+        [1.75394457, 1.75394457, 0.0]
+    ]
+}

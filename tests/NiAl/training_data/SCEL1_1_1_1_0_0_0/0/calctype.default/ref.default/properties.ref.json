@@ -1,0 +1,8 @@
+{
+  "configid" : "1",
+  "param_composition" : [ 0.000000000000 ],
+  "reference" : {
+    "relaxed_energy" : -5.77487892
+  },
+  "supercell_name" : "SCEL1_1_1_1_0_0_0"
+}

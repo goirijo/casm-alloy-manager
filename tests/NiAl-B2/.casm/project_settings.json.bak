@@ -1,0 +1,19 @@
+{
+  "compile_options" : "g++ -O3 -Wall -fPIC --std=c++11",
+  "curr_bset" : "default",
+  "curr_calctype" : "default",
+  "curr_clex" : "formation_energy",
+  "curr_eci" : "default",
+  "curr_properties" : [ "relaxed_energy" ],
+  "curr_ref" : "default",
+  "name" : "NiAl_B2",
+  "nlist_sublat_indices" : [ 0, 1 ],
+  "nlist_weight_matrix" : [
+    [ 1, 0, 0 ],
+    [ 0, 1, 0 ],
+    [ 0, 0, 1 ]
+  ],
+  "so_options" : "g++ -shared -lboost_system",
+  "tol" : 0.000010000000,
+  "view_command" : ""
+}

@@ -1,0 +1,33 @@
+{
+  "current_axes" : "1",
+  "standard_axes" : {
+    "0" : {
+      "a" : [
+        [ 0.000000000000 ],
+        [ 1.000000000000 ]
+      ],
+      "components" : [ "Ni", "Al" ],
+      "independent_compositions" : 1,
+      "mol_formula" : "Ni(1-a)Al(a)",
+      "origin" : [
+        [ 1.000000000000 ],
+        [ 0.000000000000 ]
+      ],
+      "param_formula" : "a(0.5-0.5Ni+0.5Al)"
+    },
+    "1" : {
+      "a" : [
+        [ 1.000000000000 ],
+        [ 0.000000000000 ]
+      ],
+      "components" : [ "Ni", "Al" ],
+      "independent_compositions" : 1,
+      "mol_formula" : "Ni(a)Al(1-a)",
+      "origin" : [
+        [ 0.000000000000 ],
+        [ 1.000000000000 ]
+      ],
+      "param_formula" : "a(0.5+0.5Ni-0.5Al)"
+    }
+  }
+}

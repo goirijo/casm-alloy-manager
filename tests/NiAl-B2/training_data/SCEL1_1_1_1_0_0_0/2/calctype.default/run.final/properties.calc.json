@@ -1,0 +1,22 @@
+{
+    "atom_type": [
+        "Al"
+    ], 
+    "atoms_per_type": [
+        1
+    ], 
+    "coord_mode": "direct", 
+    "is_complete": true, 
+    "relaxed_basis": [
+        [0.0, 0.0, 0.0]
+    ], 
+    "relaxed_energy": -3.37389576, 
+    "relaxed_forces": [
+        [0.0, 0.0, 0.0]
+    ], 
+    "relaxed_lattice": [
+        [2.72181914, 0.0, 0.0], 
+        [0.0, 2.72181914, 0.0], 
+        [0.0, 0.0, 2.72181914]
+    ]
+}
