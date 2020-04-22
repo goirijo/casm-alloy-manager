@@ -394,15 +394,24 @@ def rank_relaxed_structure_mapping_scores(mappers, relaxed_structures):
 
 
 def main():
+    #Specify root directories for each casm project
     fcc_fs = ProjectFilesystem("./tests/NiAl", name="NiAl-FCC")
     b2_fs = ProjectFilesystem("./tests/NiAl-B2", name="NiAl-B2")
 
+    #Store each project filesystem in a list
     fss = [fcc_fs, b2_fs]
+    #Load every configuration available in the FCC project
     fcc_confignames=fcc_fs.confignames()
+    #Specify which relaxed structures to load (all of them in this case)
     fcc_relaxed_strucs = load_relaxed_structures(fcc_fs,fcc_confignames)
+    #For each project, create a mapper that uses its prim as the reference structure
     mappers = [load_prim_mapper(fs) for fs in fss]
 
+    #Rank how well all of the relaxed FCC structures we loaded earlier
+    #map to each of the project prims
     ranks = rank_relaxed_structure_mapping_scores(mappers, fcc_relaxed_strucs)
+
+    #print results
     print([fs.name for fs in fss])
     for c, r in zip(fcc_confignames, ranks):
         print(c, r)
