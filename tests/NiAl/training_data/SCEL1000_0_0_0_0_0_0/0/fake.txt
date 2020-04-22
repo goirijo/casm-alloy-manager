@@ -1,0 +1,1 @@
+This is a fake enumrated configuration to test what happens when the configuration is "valid", but the porperties.calc.json don't exist

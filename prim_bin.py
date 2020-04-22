@@ -1,7 +1,62 @@
 import casmutils as cu
 import json
 import os
+import glob
 import numpy as np
+
+
+def returned_path_must_exist(returns_path):
+    """Decorator that throws exception if the
+    returned value of returns_path does not
+    exist
+
+    Parameters
+    ----------
+    returns_path : function, returns path to file
+
+    Returns
+    -------
+    function
+
+    """
+
+    def except_if_doesnt_exist(*args, **kwargs):
+        path = returns_path(*args, **kwargs)
+        if not os.path.exists(path):
+            raise FileNotFoundError(path)
+        return path
+
+    return except_if_doesnt_exist
+
+
+def return_None_if_doesnt_exist(returns_path):
+    """Decorator that returns None if
+    returned value of returns_path does not
+    exist
+
+    Parameters
+    ----------
+    returns_path : function, returns path to file
+
+    Returns
+    -------
+    function
+
+    """
+
+    def none_if_doesnt_exist(*args, **kwargs):
+        path = returns_path(*args, **kwargs)
+        if not os.path.exists(path):
+            return None
+        return path
+
+    return none_if_doesnt_exist
+
+
+def read_json(json_file):
+    with open(json_file) as json_data:
+        d = json.load(json_data)
+    return d
 
 
 class ProjectFilesystem(object):
@@ -37,6 +92,7 @@ class ProjectFilesystem(object):
     def root(self):
         return self._root
 
+    @returned_path_must_exist
     def prim(self):
         """Return path to prim.json file
         Returns
@@ -46,6 +102,7 @@ class ProjectFilesystem(object):
         """
         return os.path.join(self.root, "prim.json")
 
+    @returned_path_must_exist
     def configuration(self, configname):
         """Return path to the specified configuration, given
         as "SCELX_A_B_C_D_E_F/Z"
@@ -62,6 +119,7 @@ class ProjectFilesystem(object):
         scel, config = configname.split("/")
         return os.path.join(self.root, "training_data", scel, config)
 
+    @returned_path_must_exist
     def pos(self, configname):
         """Return path to POS (ideal POSCAR) of
         the specified configuration
@@ -77,6 +135,7 @@ class ProjectFilesystem(object):
         """
         return os.path.join(self.configuration(configname), "POS")
 
+    @return_None_if_doesnt_exist
     def calc_properties(self, configname):
         """Returns path to the properties.calc.json file of the
         specified configuration, where the configname is given in the
@@ -95,6 +154,24 @@ class ProjectFilesystem(object):
         return os.path.join(
             self.configuration(configname), "calctype.{}".format(self.calctype),
             "properties.calc.json")
+
+    def confignames(self):
+        """Returns list of all the confignames that were found in the
+        project filesystem
+
+        Returns
+        -------
+        list(path)
+
+        """
+        paths = [
+            p for p in glob.glob(
+                os.path.join(self.root, "training_data", "SCEL*_*_*_*_*_*_*",
+                             "*")) if os.path.isdir(p)
+        ]
+
+        prefix = os.path.commonpath(paths)
+        return [os.path.relpath(p, start=prefix) for p in paths]
 
 
 def make_lattice(properties):
@@ -175,8 +252,7 @@ def read_structure(properties_file):
     cu.xtal.Structure
 
     """
-    with open(properties_file) as json_data:
-        d = json.load(json_data)
+    d = read_json(properties_file)
     return make_structure(d)
 
 
@@ -223,7 +299,8 @@ def make_prim(prim):
             cu.xtal.Coordinate(site["coordinate"]) for site in prim["basis"]
         ]
 
-    return cu.xtal.Structure(lat,[cu.xtal.Site(c,s) for c,s in zip(coords,species)])
+    return cu.xtal.Structure(
+        lat, [cu.xtal.Site(c, s) for c, s in zip(coords, species)])
 
 
 def make_prim_mapper(prim):
@@ -240,13 +317,95 @@ def make_prim_mapper(prim):
     cu.mapping.structure.StructureMapper
 
     """
-    prim_struc=make_prim(prim)
-    allowed_species=make_allowed_species(prim)
+    prim_struc = make_prim(prim)
+    allowed_species = make_allowed_species(prim)
 
-    return cu.mapping.structure.StructureMapper(prim_struc,allowed_species=allowed_species)
+    #TODO: use_crystal_symmetry=True ?
+    return cu.mapping.structure.StructureMapper(
+        prim_struc, allowed_species=allowed_species, use_crystal_symmetry=True)
+
+
+def load_relaxed_structures(fs, confignames=None):
+    """Create cu.xtal.Structure objects from the relaxed
+    properties files for each of the specified configurations
+    within the specified casm project. If the configuration
+    exists, but has not been relaxed yet, inserts None.
+
+    Parameters
+    ----------
+    fs : ProjectFilesystem
+    confignames : list(str), optional (all configurations if not specified)
+
+    Returns
+    -------
+    list(cu.xtal.Structure)
+
+    """
+    if confignames is None:
+        confignames = fs.confignames()
+
+    props_files = [fs.calc_properties(c) for c in confignames]
+    return [
+        make_structure(read_json(p)) if p is not None else None
+        for p in props_files
+    ]
+
+
+def load_prim_mapper(fs):
+    """Given a project filesystem, construct a mapper
+    object that uses the prim of the project as a
+    reference structure.
+
+    Parameters
+    ----------
+    fs : ProjectFilesystem
+
+    Returns
+    -------
+    cu.mapping.structure.StructureMapper
+
+    """
+    return make_prim_mapper(read_json(fs.prim()))
+
+
+def rank_relaxed_structure_mapping_scores(mappers, relaxed_structures):
+    """Pass each relaxed structure to all of the mapping objects
+    and rank how well they each scored. If elements in the relaxed
+    structures list are None, they are assigned -1 rank.
+
+    Parameters
+    ----------
+    mappers : list(cu.xtal.mapping.structure.StructureMapper)
+    relaxed_structures : list(cu.xtal.Structure)
+
+    Returns
+    -------
+    list(list(int)) where 0 is the best map
+
+    """
+    scores = np.array([[m(p)[0].cost
+                        for m in mappers]
+                       if p is not None else len(mappers) * [np.nan]
+                       for p in relaxed_structures])
+    ranks = np.argsort(scores)
+    mask=np.isnan(scores)
+    ranks[mask]=-1
+    return ranks
 
 
 def main():
+    fcc_fs = ProjectFilesystem("./tests/NiAl", name="NiAl-FCC")
+    b2_fs = ProjectFilesystem("./tests/NiAl-B2", name="NiAl-B2")
+
+    fss = [fcc_fs, b2_fs]
+    fcc_confignames=fcc_fs.confignames()
+    fcc_relaxed_strucs = load_relaxed_structures(fcc_fs,fcc_confignames)
+    mappers = [load_prim_mapper(fs) for fs in fss]
+
+    ranks = rank_relaxed_structure_mapping_scores(mappers, fcc_relaxed_strucs)
+    print([fs.name for fs in fss])
+    for c, r in zip(fcc_confignames, ranks):
+        print(c, r)
 
 if __name__ == "__main__":
     main()
